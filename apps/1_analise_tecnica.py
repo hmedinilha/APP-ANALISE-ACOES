@@ -7,6 +7,10 @@ import numpy as np
 from datetime import date, datetime
 import ta as ta
 from pygwalker.api.streamlit import StreamlitRenderer
+import locale
+from streamlit_extras.metric_cards import style_metric_cards
+
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
 
 
@@ -316,58 +320,59 @@ def plot_data(symbol, date_from, data):
 
 
 
-with st.expander('Análise Técnica'):
+with st.sidebar:
+    st.header('Análise Técnica')
     st.write('Parâmetros Gráficos')
     
-    c1, c2, c3 = st.columns([1,1,1])
-    
-
-    with c1:
-
-        show_nontrading_days = st.checkbox('Mostrar finais de semana?', False)
-        volume=st.checkbox('Plotar Volume?', True)
-    
-    with c2:
-
-        chart_styles = [
-            'default', 'binance', 'blueskies', 'brasil', 
-            'charles', 'checkers', 'classic', 'yahoo',
-            'mike', 'nightclouds', 'sas', 'starsandstripes'
-        ]
-        chart_style = st.selectbox('Estilo do Gráfico', options=chart_styles, index=chart_styles.index('yahoo'))
-
-    with c3:
-        chart_types = ['candle', 'ohlc', 'line']
-        chart_type = st.selectbox('Tipo de gráfico', options=chart_types, index=chart_types.index('candle'))
-    
     
     
 
-    st.markdown('---')
-    medias =st.checkbox('Médias Aritiméticas')
+    borda = st.container(border=True)
+
+    show_nontrading_days = borda.checkbox('Mostrar finais de semana?', False)
+    volume=borda.checkbox('Plotar Volume?', True)
+    
+    
+
+    chart_styles = [
+        'default', 'binance', 'blueskies', 'brasil', 
+        'charles', 'checkers', 'classic', 'yahoo',
+        'mike', 'nightclouds', 'sas', 'starsandstripes'
+    ]
+    chart_style = borda.selectbox('Estilo do Gráfico', options=chart_styles, index=chart_styles.index('yahoo'))
+
+   
+    chart_types = ['candle', 'ohlc', 'line']
+    chart_type = borda.selectbox('Tipo de gráfico', options=chart_types, index=chart_types.index('candle'))
+    
+    
+    
+
+    borda.markdown('---')
+    medias =borda.checkbox('Médias Aritiméticas')
     visibilidade = 'collapsed'
     habilitar=True
     if medias:
         visibilidade = "visible"
         habilitar=False
     
-    c1, c2, c3 = st.columns([1,1,1])
-    with c1:
-        mav1 = st.number_input('Média 1', min_value=3, max_value=30, value=9, step=1, label_visibility=visibilidade, disabled=habilitar)
-    with c2:
-        mav2 = st.number_input('Média 2', min_value=3, max_value=30, value=20, step=1, label_visibility=visibilidade, disabled=habilitar)
-    with c3:
-        mav3 = st.number_input('Média Vol', min_value=3, max_value=200, value=50, step=1, label_visibility=visibilidade, disabled=habilitar)
+    
+
+    mav1 = borda.number_input('Média 1', min_value=3, max_value=30, value=9, step=1, label_visibility=visibilidade, disabled=habilitar)
+    
+    mav2 = borda.number_input('Média 2', min_value=3, max_value=30, value=20, step=1, label_visibility=visibilidade, disabled=habilitar)
+    
+    mav3 = borda.number_input('Média Vol', min_value=3, max_value=200, value=50, step=1, label_visibility=visibilidade, disabled=habilitar)
         
         
             
-    st.markdown('---')
-    st.write('Indicadores Técnicos')
+    borda.markdown('---')
+    borda.write('Indicadores Técnicos')
     c1, c2 = st.columns([1,1])
     with c1:
-            ifr = st.checkbox('IFR 14 períodos', value=False)
+            ifr = borda.checkbox('IFR 14 períodos', value=False)
     with c2:
-            bbollinger = st.checkbox('Bandas de Bollinger', value = False)
+            bbollinger = borda.checkbox('Bandas de Bollinger', value = False)
             
 
 ## METRICAS PARA CALIBRAR O GRAFICO ##
@@ -377,7 +382,7 @@ def cards():
     c1, c2, c3, c4  = st.columns([1,1,1,1])
     
     with c1:
-        b1=st.container(border=True)
+        b1=st.container(border=False)
         data1 = data.copy()
         data2 = data1.dropna()
         media52dias = pd.to_datetime('today') - pd.DateOffset(days=90)
@@ -386,40 +391,73 @@ def cards():
         media52_filtrada = data2.iloc[positions]['Close']
         delta52 = data2['Close'].pct_change(periods=90)
 
-        b1.metric('Média de 90 dias', value = round(media52_filtrada.mean(), ndigits=2), delta = round(delta52.iloc[-1]*100, ndigits=2))
+        b1.metric('Média de 90 dias', value = locale.format_string("R$ %.2f",round(media52_filtrada.mean(), ndigits=2),monetary=True, grouping=True), 
+                  delta =f"{round(delta52.iloc[-1]*100, ndigits=2)} %")
+        
+        b4=st.container(border=False)
+        price = data2['Close'].tail(1).unique()
+        var_dia = data2['Close'].pct_change()
+        b4.metric('Último Fechamento', value =locale.format_string("R$ %.2f", round(float(price), ndigits=2),grouping=True), 
+                  delta = f"{round((var_dia.iloc[-1])*100, ndigits=3)} %")
         
         
     with c2:
-        b2=st.container(border=True)
+        b2=st.container(border=False)
         media30dias = pd.to_datetime('today') - pd.DateOffset(days=30)
         media30 = data2.index >= media30dias
         positions1 = np.flatnonzero(media30)
         media30_filtrada = data2.iloc[positions1]['Close']
         delta30 = data2['Close'].pct_change(periods=30)
-        b2.metric('Média de 30 dias', value = round(media30_filtrada.mean(), ndigits=2),delta = round((delta30.iloc[-1])*100, ndigits=3))
+        b2.metric('Média de 30 dias', value = locale.format_string("R$ %.2f", round(media30_filtrada.mean(), ndigits=2),grouping=True),
+                  delta =f"{ round((delta30.iloc[-1])*100, ndigits=3)} %")
+
+        b7 = st.container(border=False)
+        lvol = data2['Volume'].iloc[-1]
+        ldelta = data2['Volume'].pct_change()
+        b7.metric(label='Último Volume', value=locale.format_string("%.0f",round(lvol, ndigits=0), grouping=True),
+                  delta=f"{ round(ldelta.iloc[-1], ndigits=3)} %")
 
     with c3:
-        b3=st.container(border=True)
+        b3=st.container(border=False)
         media9dias = pd.to_datetime('today') - pd.DateOffset(days=9)
         media9 = data2.index >= media9dias
         positions2 = np.flatnonzero(media9)
         media9_filtrada = data2.iloc[positions2]['Close']
         delta9 = data2['Close'].pct_change(periods=9)
-        b3.metric('Média de 9 dias', value = round(media9_filtrada.mean(), ndigits=2), delta = round((delta9.iloc[-1])*100, ndigits=3))
+        b3.metric('Média de 9 dias', value = locale.format_string("R$ %.2f", round(media9_filtrada.mean(), ndigits=2),grouping=True),
+                  delta = f"{ round((delta9.iloc[-1])*100, ndigits=3)} %")
+        
+        b6 = st.container(border=False)
+        mvol = data2['Volume'].rolling(window = 50).mean()
+        deltavol= mvol.pct_change()
+        b6.metric(label='Média Volume 50 dias', value=locale.format_string("%.0f",round(mvol.tail(1), ndigits=0),grouping=True),
+                   delta=f"{round(deltavol.iloc[-1], ndigits=3)} %")
 
     with c4:
-        b4=st.container(border=True)
-        price = data2['Close'].tail(1).unique()
-        var_dia = data2['Close'].pct_change()
-        b4.metric('Último Fechamento', value = round(float(price), ndigits=2), delta = round((var_dia.iloc[-1])*100, ndigits=3))
+        b4=st.container(border=False)
+        med_200 =data2['Close'].rolling(window=200).mean()
+        delta_200 = med_200.pct_change()
+        b4.metric('Média 200 dias', value =locale.format_string("R$ %.2f", round(med_200.tail(1), ndigits=2),grouping=True), 
+                  delta = f"{round((delta_200.iloc[-1]), ndigits=3)} %")
+        
+        b5 = st.container(border=False)
+        data2['RSI'] = ta.momentum.rsi(data2['Close'], window=14)
+        ifr = float(data2['RSI'].tail(1).unique())
+        ifrdelta = data2['RSI'].pct_change()
+        b5.metric(label='IFR', value=f"{round(ifr, ndigits=2)} %", delta=f"{round(ifrdelta.iloc[-1], ndigits=3)} %")
+    style_metric_cards()
+    
+    
 
-tab1, tab2 = st.tabs(['Gráfico', 'Exploração Personalizada'])    
+tab1, tab2, tab3= st.tabs(['Gráfico', 'Indicadores técnicos','Exploração Personalizada'])    
 
 with tab1:
-    cards()
     plot_data(symbol, date_from, get_data(symbol, date_from))
 
 with tab2:
+    cards()
+
+with tab3:
     st.write('O PyGWalker transforma seus dados em aplicativos de visualização interativa e permite que você compartilhe suas análises com um clique :sunglasses:.')
     dadostab= get_data(symbol,date_from)
     def pyg_renderer() -> "StreamlitRenderer":
