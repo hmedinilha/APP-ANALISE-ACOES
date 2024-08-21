@@ -10,7 +10,7 @@ from pygwalker.api.streamlit import StreamlitRenderer
 import locale
 from streamlit_extras.metric_cards import style_metric_cards
 
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+#locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
 
 
