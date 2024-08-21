@@ -12,7 +12,7 @@ from streamlit_extras.row import row
 from deep_translator import GoogleTranslator
 import requests
 from bcb import sgs
-import locale
+
 
 tradutor = GoogleTranslator(source= "auto", target= "pt")
 
@@ -145,7 +145,7 @@ with tab1:
    
     cc2.plotly_chart(boxplot())
     cc2.write(f'O índice de volatilidade do ativo ficou em {round(df['vols'].iloc[0]*100, ndigits=2)} % no período de {dias_} dias')
-    cc2.write(f'O preço atual do ativo é {locale.format_string("R$ %.2f", round(valorhj, ndigits=2),grouping=True)}.')
+    cc2.write(f'O preço atual do ativo é R$ {round(valorhj, ndigits=2)}.')
 
     
 
